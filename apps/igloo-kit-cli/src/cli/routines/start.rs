@@ -6,30 +6,32 @@ use super::{
     Routine, RoutineFailure, RoutineSuccess, RunMode,
 };
 use crate::cli::routines::initialize::CreateIglooTempDirectoryTree;
+use crate::cli::routines::util::ensure_docker_running;
 use crate::{
     cli::display::Message,
     project::Project,
     utilities::docker::{self},
 };
 
-pub struct RunLocalInfratructure {
+pub struct RunLocalInfrastructure {
     project: Project,
 }
-impl RunLocalInfratructure {
+impl RunLocalInfrastructure {
     pub fn new(project: Project) -> Self {
         Self { project }
     }
 }
 
-impl Routine for RunLocalInfratructure {
+impl Routine for RunLocalInfrastructure {
     fn run_silent(&self) -> Result<RoutineSuccess, RoutineFailure> {
+        ensure_docker_running()?;
         let igloo_dir = self.project.internal_dir().map_err(|err| {
             RoutineFailure::new(
                 Message::new(
                     "Failed".to_string(),
                     "to create .igloo directory. Check permissions or contact us`".to_string(),
                 ),
-                err,
+                Some(err),
             )
         })?;
         // Model this after the `spin_up` function in `apps/igloo-kit-cli/src/cli/routines/start.rs` but use routines instead
@@ -65,7 +67,7 @@ impl Routine for RunRedPandaContainer {
                     "Failed".to_string(),
                     "to create .igloo directory. Check permissions or contact us`".to_string(),
                 ),
-                err,
+                Some(err),
             )
         })?;
 
@@ -78,7 +80,7 @@ impl Routine for RunRedPandaContainer {
                         self.project.redpanda_config
                     ),
                 ),
-                err,
+                Some(err),
             )
         })?;
 
@@ -108,7 +110,7 @@ impl Routine for RunClickhouseContainer {
                     "Failed".to_string(),
                     "to create .igloo directory. Check permissions or contact us`".to_string(),
                 ),
-                err,
+                Some(err),
             )
         })?;
 
@@ -122,7 +124,7 @@ impl Routine for RunClickhouseContainer {
                     "Failed".to_string(),
                     "to run clickhouse container".to_string(),
                 ),
-                err,
+                Some(err),
             )
         })?;
 
